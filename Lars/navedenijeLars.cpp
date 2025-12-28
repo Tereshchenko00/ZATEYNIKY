@@ -5,15 +5,15 @@ struct Mirror{
 
 		void turnX(int angle){
 			///
-			return 0;
 		}
 
 		void turnY(int angle){
 			///
-			return 0;
+
 		}
-		void getPos(){
-			return angleX, angleY;
+		void getPos(int& x, int& y){
+			x = angleX;
+			y = angleY;
 		}
 }
 
