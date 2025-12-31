@@ -1,5 +1,5 @@
 # ZATEYNIKY
-
+пожалуйста, используйте camelCase
 ## В ролях
 
 <img width="654" height="658" alt="изображение" src="https://github.com/user-attachments/assets/8bfebb41-b0e8-49a5-a926-842b912724b0" /> - режиссер Джеймс Кэмерон
