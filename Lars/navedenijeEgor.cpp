@@ -1,9 +1,10 @@
+// че добавить: позиционирование в (0;0). хз.
 
 struct Turret{
     public: // главные штуки. доступны для вызова в setup и loop
         float Cord[2] = {0,0}; // текущие углы турельки
 
-        void move(float angleX, float angleY){ // собственно главная функция, двигающая турельку.
+        void moveTo(float angleX, float angleY){ // собственно главная функция, двигающая турельку.
             float moveAngles[2] = {0, 0};
 
             moveAngles[0] = calculateAngle(Cord[0], angleX); // считаем, сколько ехать по Х
@@ -51,12 +52,16 @@ struct Turret{
 
 };
 
-Turret Turret; 
+Turret Lazer; 
 
 
  void setup(){
-    Turret.turnX(45.0);  // Повернули на 45
-    Turret.turnY(30.0);  // Повернули на 30
+    Lazer.turnX(45.0);  // Повернули на 45
+    Lazer.turnY(30.0);  // Повернули на 30
+                              // щас мы в (45, 30) относительно 0
+
+    Lazer.moveTo(10.0, 30); // крутимся в положение (10, 30) относительно 0
+
 
 };
 
