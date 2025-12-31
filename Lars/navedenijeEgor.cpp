@@ -1,7 +1,18 @@
 
 struct Turret{
     public: // главные штуки. доступны для вызова в setup и loop
-        float Cord[2] = {0,0};
+        float Cord[2] = {0,0}; // текущие углы турельки
+
+        void move(float angleX, float angleY){ // собственно главная функция, двигающая турельку.
+            float moveAngles[2] = {0, 0};
+
+            moveAngles[0] = calculateAngle(Cord[0], angleX); // считаем, сколько ехать по Х
+            moveAngles[1] = calculateAngle(Cord[1], angleY); // считаем, сколько ехать по Y
+
+            turnX(moveAngles[0]); // крутимся по Х
+            turnY(moveAngles[1]); // крутимся по Y
+        }
+
 
         void turnX(float angle){
             // заставляем мотор Х крутиться на угол angle
@@ -15,6 +26,13 @@ struct Turret{
             Cord[1] += angle;
         }
     private: // вспомогательные штуки, недоступны снаружи структуры
+
+        float calculateAngle(float curAngle, float targetAngle){ // вычисляем то самое смещение по 1 оси(подробно описано в документации)
+            float directAngle = targetAngle - curAngle;  
+            return directAngle; 
+        }
+
+
 
         int angleToStepsX(float degrees){
             // переводит углы в шаги мотора для оси Х
@@ -31,15 +49,18 @@ struct Turret{
         }
         
 
-}
+};
+
+Turret Turret; 
 
 
  void setup(){
+    Turret.turnX(45.0);  // Повернули на 45
+    Turret.turnY(30.0);  // Повернули на 30
 
-
-}
+};
 
 void loop(){
 
 
-}
+};
