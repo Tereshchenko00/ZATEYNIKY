@@ -18,6 +18,7 @@
 
           float Cord[2] = {0,0}; // текущие углы турельки
 
+
           void moveTo(float angleX, float angleY){ // собственно главная функция, двигающая турельку.
               float moveAngles[2] = {0, 0};
 
@@ -44,22 +45,38 @@
               Cord[1] += angle;
           }
       private: // вспомогательные штуки, недоступны снаружи структуры
+
+          int MicroStepsMode = 0; //0...4
+                                  // 0 = 1/1
+                                  // 1 = 1/2
+                                  // 2 = 1/4
+                                  // 3 = 1/8
+                                  // 4 = 1/16
+          int MicroSteps[5][3] = {     // {MS1, MS2, MS3}
+            {0, 0, 0}, // 1/1
+            {1, 0, 0}, // 1/2
+            {0, 1, 0}, // 1/4
+            {1, 1, 0}, // 1/8
+            {1, 1, 1}  // 1/16
+          };
+
           AccelStepper stepperX;
           AccelStepper stepperY;
           float calculateAngle(float curAngle, float targetAngle){
               float diff = targetAngle - curAngle;
-                                                      // Нормализация угла (если нужно)
+
               if(diff > 180) diff -= 360;
               if(diff < -180) diff += 360;
               return diff;
-}
+          }
 
 
 
           int angleToStepsX(float degrees){
               // шаги = градусы / угол шага мотора
+              //return degrees / 1.8;
+            
 
-              return degrees / 1.8; // Простой пример
           }
 
           int angleToStepsY(float degrees){
