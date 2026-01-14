@@ -45,6 +45,9 @@
               Cord[1] += angle;
           }
       private: // вспомогательные штуки, недоступны снаружи структуры
+          int currPlan[5] = {0, 0, 0, 0, 0}; // план для наведения мотора Х. 
+                                                                // {1, 1/2, 1/4, 1/8, 1/16}
+
 
           int MicroStepsMode = 0; //0...4
                                   // 0 = 1/1
@@ -62,19 +65,31 @@
 
           AccelStepper stepperX;
           AccelStepper stepperY;
-          float calculateAngle(float curAngle, float targetAngle){
-              float diff = targetAngle - curAngle;
-
-              if(diff > 180) diff -= 360;
-              if(diff < -180) diff += 360;
-              return diff;
-          }
 
 
 
-          int angleToStepsX(float degrees){
+          float possibleAngles[5] = {
+            1.8,
+            0.9,
+            0.45,
+            0.225,
+            0.1125
+          };
+        
+          void angleToStepsX(float degrees){ // на вход подаем угол
+                                            // эта функция его заполняет для поворота на угол degrees 
+                                            // относительно текущего
               // шаги = градусы / угол шага мотора
               //return degrees / 1.8;
+
+              for(int i = 0; i < 5; i++){
+                if(degrees < 0.1) break;
+                currPlan[i] = (int) (degrees / possibleAngles[i]);
+                degrees = degrees - currPlan[i];
+                
+
+              }
+
             
 
           }
@@ -85,7 +100,14 @@
               int steps = (degrees / 1.8) * 8;
               return steps;
           }
-          
+
+          float calculateAngle(float curAngle, float targetAngle){
+              float diff = targetAngle - curAngle;
+
+              if(diff > 180) diff -= 360;
+              if(diff < -180) diff += 360;
+              return diff;
+          }
 
   };
   
