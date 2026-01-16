@@ -15,6 +15,7 @@
             stepperX.setAcceleration(1000);
             stepperY.setAcceleration(1000);
         }
+
         float Cord[2] = {0,0}; // текущие углы турельки
         int pin_MS1, pin_MS2, pin_MS3;
         
@@ -47,17 +48,15 @@
         AccelStepper stepperX;
         AccelStepper stepperY;
 
-       // только 2 режима
+        // только 2 режима
         int fullSteps = 0;    // в режиме 1/1
         int microSteps = 0;   // в режиме 1/16
           
-      // Только 2 угла шага
+        // Только 2 угла шага
         float fullStepAngle = 1.8;     // 1/1
         float microStepAngle = 0.1125; // 1/16
-      
-        // Пины 
-        int pin_MS1, pin_MS2, pin_MS3;
-          
+
+
         void setFullStepMode() {
             digitalWrite(pin_MS1, 0);
             digitalWrite(pin_MS2, 0);
@@ -97,7 +96,11 @@ const int pin_dirY = 3;
 const int pin_stepX = 4;
 const int pin_stepY = 5;
 
-Turret Lazer(pin_stepX, pin_dirX, pin_stepY, pin_dirY); 
+const int pin_MS1 = 6;
+const int pin_MS2 = 7;
+const int pin_MS3 = 8;
+
+Turret Lazer(pin_stepX, pin_dirX, pin_stepY, pin_dirY, pin_MS1, pin_MS2, pin_MS3); 
 
 
 void setup(){
@@ -109,7 +112,6 @@ void setup(){
   Lazer.moveTo(90.0, 0.0);
   delay(2000);
   // Lazer.moveTo(10.0, 30); // крутимся в положение (10, 30) относительно 0
-
 
 };
 
