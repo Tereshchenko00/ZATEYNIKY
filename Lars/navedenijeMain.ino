@@ -7,9 +7,17 @@
 
 struct Turret {
   public: // главные штуки. доступны для вызова в setup и loop
-    Turret(int stepX, int dirX, int stepY, int dirY, int pin_MS1, int pin_MS2, int pin_MS3):
-      stepperX(AccelStepper::DRIVER, stepX, dirX), stepperY(AccelStepper::DRIVER, stepY, dirY) {
-      // Настройки моторов
+    Turret(int stepX, int dirX, int stepY, int dirY, int ms1, int ms2, int ms3):
+      // Инициализация полей (порядок как в struct)
+      pin_MS1(ms1), pin_MS2(ms2), pin_MS3(ms3),
+      stepperX(AccelStepper::DRIVER, stepX, dirX),
+      stepperY(AccelStepper::DRIVER, stepY, dirY)
+    {
+      // Тело конструктора
+      pinMode(pin_MS1, OUTPUT);
+      pinMode(pin_MS2, OUTPUT);
+      pinMode(pin_MS3, OUTPUT);
+
       stepperX.setMaxSpeed(1000);
       stepperY.setMaxSpeed(1000);
       stepperX.setAcceleration(1000);
@@ -30,7 +38,7 @@ struct Turret {
     }
 
 
-    void turnX(float angle) { // мотор Х с доводкой 
+    void turnX(float angle) { // мотор Х с доводкой
       angleToStepsX(angle);
 
       setFullStepMode();
@@ -38,22 +46,28 @@ struct Turret {
       while (stepperX.distanceToGo() != 0) {
         stepperX.run();
       }
-      delay(1000);
-
       setMicroStepMode();
       stepperX.move(microSteps);
       while (stepperX.distanceToGo() != 0) {
         stepperX.run();
       }
-
       Cord[0] += angle;
     }
 
     void turnY(float angle) {
-      // заставляем мотор Y крутиться так, чтобы
-      // червяк прокрутил шестеренку на угол angle
+      // Переводим угол в шаги с учетом червячной передачи
+      int steps = angleToStepsY(angle);
+
+      // Двигаем мотор
+      stepperY.move(steps);
+      while (stepperY.distanceToGo() != 0) {
+        stepperY.run();
+      }
+
+      // Обновляем координату
       Cord[1] += angle;
     }
+
   private: // вспомогательные штуки, недоступны снаружи структуры
     AccelStepper stepperX;
     AccelStepper stepperY;
@@ -79,18 +93,38 @@ struct Turret {
       digitalWrite(pin_MS3, 1);
     }
 
-    void angleToStepsX(float degrees) { // на вход подаем угол
-      fullSteps = (int) (degrees / fullStepAngle);
-      degrees = degrees - degrees * fullSteps;
-      microSteps = (int) (degrees / microStepAngle);
+    void angleToStepsX(float degrees) {
+      // Берём абсолютное значение
+      float absDeg = fabs(degrees);
+
+      // Считаем полные шаги
+      fullSteps = (int)(absDeg / fullStepAngle);
+
+      // Остаток после полных шагов
+      float remaining = absDeg - (fullSteps * fullStepAngle);
+
+      // Остаток переводим в микрошаги
+      microSteps = (int)(remaining / microStepAngle + 0.5);
+
+      // Исправление переполнения микрошагов до применения знака
+      if (microSteps >= 16) {
+        fullSteps += (microSteps / 16);
+        microSteps = microSteps % 16;
+      }
+
+      // Учитываем знак угла
+      if (degrees < 0) {
+        fullSteps = -fullSteps;
+        microSteps = -microSteps;
+      }
     }
 
     int angleToStepsY(float degrees) {
-      // то же самое для мотора на оси Y
-      // нужны какие-то коэфициенты из-за червячной передачи
+      // червячная передача: коэффициент 8:1
       int steps = (degrees / 1.8) * 8;
       return steps;
     }
+
 
     float calculateAngle(float curAngle, float targetAngle) {
       float diff = targetAngle - curAngle;
@@ -99,6 +133,7 @@ struct Turret {
       return diff;
     }
 };
+
 
 const int pin_dirX = 2;
 const int pin_dirY = 3;
