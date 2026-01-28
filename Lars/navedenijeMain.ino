@@ -159,14 +159,14 @@ struct Turret {
 };
 
 
-const int pin_dirX = 2;
-const int pin_dirY = 3;
-const int pin_stepX = 4;
-const int pin_stepY = 5;
+const int pin_dirX = 3;
+const int pin_dirY = 21;
+const int pin_stepX = 5;
+const int pin_stepY = 23;
 
-const int pin_MS1 = 6;
-const int pin_MS2 = 7;
-const int pin_MS3 = 8;
+const int pin_MS1 = 13;
+const int pin_MS2 = 11;
+const int pin_MS3 = 9;
 
 const int pin_knopkaX = 23;
 const int pin_knopkaY = 36;
