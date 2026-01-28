@@ -9,7 +9,7 @@ struct Turret {
   public: // главные штуки. доступны для вызова в setup и loop
     Turret(int stepX, int dirX, int stepY, int dirY, int ms1, int ms2, int ms3, int kX, int kY):
       pin_MS1(ms1), pin_MS2(ms2), pin_MS3(ms3),
-      bottonPinX(kX), bottonPinY(kY),
+      buttonPinX(kX), buttonPinY(kY),
       stepperX(AccelStepper::DRIVER, stepX, dirX),
       stepperY(AccelStepper::DRIVER, stepY, dirY)
     {
@@ -17,8 +17,8 @@ struct Turret {
       pinMode(pin_MS1, OUTPUT);
       pinMode(pin_MS2, OUTPUT);
       pinMode(pin_MS3, OUTPUT);
-      pinMode(buttonPinY, INPUT_PULLUP); 
-      pinMode(buttonPinX, INPUT_PULLUP); 
+      pinMode(buttonPinY, INPUT); 
+      pinMode(buttonPinX, INPUT); 
       stepperX.setMaxSpeed(1000);
       stepperY.setMaxSpeed(1000);
       stepperX.setAcceleration(1000);
@@ -26,7 +26,7 @@ struct Turret {
     }
 
     float Cord[2] = {0, 0}; // текущие углы турельки
-    int pin_MS1, pin_MS2, pin_MS3, bottonPinX, bottonPinY;
+    int pin_MS1, pin_MS2, pin_MS3, buttonPinX, buttonPinY;
 
     void moveTo(float angleX, float angleY) { // собственно главная функция, двигающая турельку.
 
@@ -70,7 +70,7 @@ struct Turret {
     }
     void calibrateY() {
         // Вниз до кнопки
-        while(digitalRead(buttonPinY) == HIGH) {
+        while(digitalRead(buttonPinY) == LOW) {
             stepperY.move(-10);
             stepperY.runToPosition();
         }
@@ -79,7 +79,7 @@ struct Turret {
         Cord[1] = yMinAngle;
         stepperY.setCurrentPosition(angleToStepsY(yMinAngle));
         
-        // едем центр 
+        // едем в центр 
         turnY(-yMinAngle); // двигаемся на -yMinAngle градусов
     }
 
@@ -92,7 +92,7 @@ struct Turret {
     float yMinAngle = -40.5;
     float xMinAngle = -40.5;
 
-    // только 2 режима
+        // только 2 режима
     int fullSteps = 0;    // в режиме 1/1
     int microSteps = 0;   // в режиме 1/16
 
@@ -114,6 +114,10 @@ struct Turret {
     }
 
     void angleToStepsX(float degrees) {
+      // Очищаем 
+      fullSteps = 0;
+      microSteps = 0;
+
       // Берём абсолютное значение
       float absDeg = fabs(degrees);
 
@@ -165,12 +169,19 @@ const int pin_MS2 = 7;
 const int pin_MS3 = 8;
 
 const int pin_knopkaX = 23;
-const int pin_knopkaY = 25;
+const int pin_knopkaY = 36;
 
 Turret Lazer(pin_stepX, pin_dirX, pin_stepY, pin_dirY, pin_MS1, pin_MS2, pin_MS3, pin_knopkaX, pin_knopkaY);
 
 
 void setup() {
+  pinMode(38, OUTPUT);
+  digitalWrite(38, HIGH);
+
+  Lazer.calibrateY();
+  delay(1000);
+  
+
   Lazer.moveTo(45.0, 0);
   delay(1000);
   Lazer.moveTo(-90.0, 0);
