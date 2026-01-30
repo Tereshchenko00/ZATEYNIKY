@@ -1,7 +1,5 @@
 #include <AccelStepper.h>
 
-
-
 // че добавить: позиционирование в (0;0). хз.
 // структура турели, может крутиться куда ей скажут
 
@@ -17,12 +15,12 @@ struct Turret {
       pinMode(pin_MS1, OUTPUT);
       pinMode(pin_MS2, OUTPUT);
       pinMode(pin_MS3, OUTPUT);
-      pinMode(buttonPinY, INPUT); 
-      pinMode(buttonPinX, INPUT); 
+      pinMode(buttonPinY, INPUT);
+      pinMode(buttonPinX, INPUT);
       stepperX.setMaxSpeed(1000);
       stepperY.setMaxSpeed(1000);
       stepperX.setAcceleration(1000);
-      stepperY.setAcceleration(1000);
+      stepperY.setAcceleration(900000);
     }
 
     float Cord[2] = {0, 0}; // текущие углы турельки
@@ -68,19 +66,23 @@ struct Turret {
       // Обновляем координату
       Cord[1] += angle;
     }
+
+
     void calibrateY() {
-        // Вниз до кнопки
-        while(digitalRead(buttonPinY) == LOW) {
-            stepperY.move(-10);
-            stepperY.runToPosition();
-        }
+      // Вниз до кнопки
+      while (digitalRead(buttonPinY) == HIGH) {
+        stepperY.move(-10);
+        stepperY.runToPosition();
+        Serial.println(digitalRead(buttonPinY));
         
-        // Устанавливаем нижний предел
-        Cord[1] = yMinAngle;
-        stepperY.setCurrentPosition(angleToStepsY(yMinAngle));
-        
-        // едем в центр 
-        turnY(-yMinAngle); // двигаемся на -yMinAngle градусов
+      }
+
+      // Устанавливаем нижний предел
+      Cord[1] = yMinAngle;
+      stepperY.setCurrentPosition(angleToStepsY(yMinAngle));
+
+      // едем в центр
+      turnY(-yMinAngle); // двигаемся на -yMinAngle градусов
     }
 
 
@@ -89,10 +91,10 @@ struct Turret {
     AccelStepper stepperY;
 
     // крайние положения
-    float yMinAngle = -40.5;
-    float xMinAngle = -40.5;
+    float yMinAngle = -45;
+    float xMinAngle = -45;
 
-        // только 2 режима
+    // только 2 режима
     int fullSteps = 0;    // в режиме 1/1
     int microSteps = 0;   // в режиме 1/16
 
@@ -114,9 +116,11 @@ struct Turret {
     }
 
     void angleToStepsX(float degrees) {
-      // Очищаем 
+      // Очищаем
       fullSteps = 0;
       microSteps = 0;
+
+
 
       // Берём абсолютное значение
       float absDeg = fabs(degrees);
@@ -168,35 +172,49 @@ const int pin_MS1 = 13;
 const int pin_MS2 = 11;
 const int pin_MS3 = 9;
 
-const int pin_knopkaX = 23;
+const int pin_knopkaX = 34;
 const int pin_knopkaY = 36;
 
 Turret Lazer(pin_stepX, pin_dirX, pin_stepY, pin_dirY, pin_MS1, pin_MS2, pin_MS3, pin_knopkaX, pin_knopkaY);
 
-
 void setup() {
+  delay(1000);
   pinMode(38, OUTPUT);
   digitalWrite(38, HIGH);
 
+  Serial.begin(9600);
+  
   Lazer.calibrateY();
   delay(1000);
-  
-
-  Lazer.moveTo(45.0, 0);
-  delay(1000);
-  Lazer.moveTo(-90.0, 0);
-  delay(1000);
-  Lazer.moveTo(90.0, 0.0);
-  delay(2000);
   // Lazer.moveTo(10.0, 30); // крутимся в положение (10, 30) относительно 0
 
 };
 
 void loop() {
-
-
-  Lazer.moveTo(0, 0);
-  delay(1000);
-  Lazer.moveTo(90, 0);
-  delay(1000);
-};
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    input.trim();
+    
+    // Ищем запятую, разделяющую координаты
+    int commaIndex = input.indexOf(',');
+    
+    if (commaIndex > 0) {
+      // Парсим координаты
+      float angleX = input.substring(0, commaIndex).toFloat();
+      float angleY = input.substring(commaIndex + 1).toFloat();
+      
+      // Двигаем турель
+      Lazer.moveTo(angleX, angleY);
+      
+      // Подтверждение
+      Serial.print("Moved to: X=");
+      Serial.print(angleX);
+      Serial.print("°, Y=");
+      Serial.print(angleY);
+      Serial.println("°");
+    } else {
+      Serial.println("Error: Use format 'angleX,angleY'");
+      Serial.println("Example: 10.5,-15.3");
+    }
+  }
+}
