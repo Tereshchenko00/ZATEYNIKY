@@ -1,5 +1,5 @@
 #include <AccelStepper.h>
-
+#include <SoftwareSerial.h>
 
 // структура турели, может крутиться куда ей скажут
 
@@ -25,6 +25,8 @@ struct Turret {
 
     float Cord[2] = {0, 0}; // текущие углы турельки
     int pin_MS1, pin_MS2, pin_MS3, buttonPinX, buttonPinY;
+
+
 
     void moveTo(float angleX, float angleY) { // собственно главная функция, двигающая турельку.
 
@@ -74,7 +76,7 @@ struct Turret {
         stepperY.move(-10);
         stepperY.runToPosition();
         Serial.println(digitalRead(buttonPinY));
-        
+
       }
 
       // Устанавливаем нижний предел
@@ -162,6 +164,9 @@ struct Turret {
     }
 };
 
+const String startMessage = "POEHALI";
+
+const int avariaPin = 34;
 
 const int pin_dirX = 3;
 const int pin_dirY = 21;
@@ -176,45 +181,136 @@ const int pin_knopkaX = 34;
 const int pin_knopkaY = 36;
 
 Turret Lazer(pin_stepX, pin_dirX, pin_stepY, pin_dirY, pin_MS1, pin_MS2, pin_MS3, pin_knopkaX, pin_knopkaY);
+SoftwareSerial HC12(10, 7); // радиомодуль
 
 void setup() {
-  delay(1000);
+
   pinMode(38, OUTPUT);
   digitalWrite(38, HIGH);
 
   Serial.begin(9600);
-  
+  HC12.begin(9600);
+//
+//  Lazer.calibrateY();
+//  delay(3000);
+//  Lazer.moveTo(40,40);
+//  delay(1000);
+//  Lazer.moveTo(-40, 40);
+//  delay(1000);
+//  Lazer.moveTo(-40, -40);
+//  delay(1000);
+//  Lazer.moveTo(40, -40);
+//  delay(1000);
+//  Lazer.moveTo(0, 0);
+  //Lazer.moveTo(10.0, 30); // крутимся в положение (10, 30) относительно 0
+  delay(100);
   Lazer.calibrateY();
   delay(1000);
-  // Lazer.moveTo(10.0, 30); // крутимся в положение (10, 30) относительно 0
-
 };
 
+bool flagStart = 1; // временно 1 чтобы не тестить радиомодуль
+
+bool mission1 = 0;
+bool mission2 = 0;
+bool mission3 = 0;
+bool mission4 = 0;
+bool finish = 0;
+
+
+float anX = 0;
+float anY = 0;
+
+unsigned long timing;
+
 void loop() {
-  if (Serial.available() > 0) {
+
+  if (flagStart == 0) {
     String input = Serial.readStringUntil('\n');
-    input.trim();
-    
-    // Ищем запятую, разделяющую координаты
-    int commaIndex = input.indexOf(',');
-    
-    if (commaIndex > 0) {
-      // Парсим координаты
-      float angleX = input.substring(0, commaIndex).toFloat();
-      float angleY = input.substring(commaIndex + 1).toFloat();
-      
-      // Двигаем турель
-      Lazer.moveTo(angleX, angleY);
-      
-      // Подтверждение
-      Serial.print("Moved to: X=");
-      Serial.print(angleX);
-      Serial.print("°, Y=");
-      Serial.print(angleY);
-      Serial.println("°");
-    } else {
-      Serial.println("Error: Use format 'angleX,angleY'");
-      Serial.println("Example: 10.5,-15.3");
+
+    if (input == startMessage) {
+      flagStart = true;
     }
   }
+
+  if (flagStart) { // MISSION
+    mission1 = 1;
+
+  }
+  if (millis() - timing >= 500){
+    if (mission1 && !(mission2 || mission3 || mission4)) { // Выполняется 1
+      if (anX > 35) {
+        Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
+        Lazer.moveTo(0,0);
+        Lazer.moveTo(0, -40);
+        // изменить углы, провести калибровку?
+        anY = -40;
+        anX = 0;
+
+        mission2 = 1;
+      }
+      else {
+        anX += 10;
+      }
+    }
+
+    if (mission1 && mission2 && !(mission3 || mission4)) { // Выполняется 2
+      if (anY > 35) {
+        Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
+        Lazer.moveTo(0,0);
+        Lazer.moveTo(-40, -40);
+        // изменить углы, провести калибровку?
+        anY = -40;
+        anX = -40;
+        mission3 = 1;
+      }
+      else {
+        anY += 10;
+      }
+    }
+
+    if (mission1 && mission2 && mission3 && !mission4) { // Выполняется 3
+      if (anX > 35 && anY > 35) {
+        Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
+        Lazer.moveTo(0,0);
+        Lazer.moveTo(-40, 40);
+        anX = -40;
+        anY = 40;
+        mission4 = 1;
+      }
+
+      else {
+        anX += 7.07;
+        anY += 7.07;
+      }
+    }
+
+    if (mission1 && mission2 && mission3 && mission4) { // Выполняется 4
+      if (anX > 35 && anY < 35) {
+        Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
+        Lazer.moveTo(-40,0);
+        anX = 0;
+        anY = 0;
+        finish = 1;
+        flagStart = 0;
+      }
+
+      else {
+        anX += 7.07;
+        anY -= 7.07;
+      }
+    }
+
+    if (flagStart) { // движение
+      Lazer.moveTo(anX, anY);
+    }
+    timing = millis();
+  
+  }
+  else{
+    Serial.print(anX);
+    Serial.print(", ");
+    Serial.print(anY);
+    
+  }
+  
 }
