@@ -86,19 +86,17 @@ struct Turret {
 
     }
     void calibrateX() {
-      stepperX.setMaxSpeed(100);
+      stepperX.setMaxSpeed(1000);
       stepperX.setAcceleration(1000);
       // Вниз до кнопки
-      digitalWrite(pin_MS1, 1);
-      digitalWrite(pin_MS2, 0);
-      digitalWrite(pin_MS3, 0);
+      setFullStepMode();
 
       while (digitalRead(buttonPinX) == LOW) {
         stepperX.move(-1);
         stepperX.runToPosition();
 
       }
-      setFullStepMode();
+
 
       // Устанавливаем нижний предел
       Cord[0] = xMinAngle;
@@ -229,6 +227,7 @@ void setup() {
   Lazer.calibrateY();
   Lazer.calibrateX();
   delay(1000);
+  HC12.println("ready");
 };
 
 bool flagStart = 0; // временно 1 чтобы не тестить радиомодуль
@@ -263,7 +262,8 @@ void loop() {
           HC12.println("OK");
           flagStart = true;
           Lazer.moveTo(-40, 0);
-
+          anX = -40;
+          anY = 0;
           break;
         }
         incomingData = "";
@@ -277,7 +277,7 @@ void loop() {
     mission1 = 1;
 
   }
-  if (millis() - timing >= 1000) {
+  if (millis() - timing >= 2500) {//не 3000, тк двигателям нужно примерно 500 мс для поворота
     if (mission1 && !(mission2 || mission3 || mission4)) { // Выполняется 1
       if (anX >= 40) {
         digitalWrite(38, 0);
@@ -328,8 +328,8 @@ void loop() {
       }
 
       else {
-        anX += 7.07;
-        anY += 7.07;
+        anX += 10;
+        anY += 10;
       }
     }
 
@@ -347,17 +347,23 @@ void loop() {
       }
 
       else {
-        anX += 7.07;
-        anY -= 7.07;
+        anX += 10;
+        anY -= 10;
       }
     }
 
     if (flagStart) { // движение и отправка телеметрии
       Lazer.moveTo(anX, anY);
-      HC12.print("Lazer1: ");
+
+      HC12.print("Lazer_ZATEY: ");
+      HC12.print(millis());
+      HC12.print("; ");
       HC12.print(anX);
       HC12.print(", ");
       HC12.print(anY);
+      HC12.print("; ");
+
+      HC12.print(flagStart);
       HC12.print("; ");
       HC12.print(mission1);
       HC12.print("; ");
@@ -366,6 +372,9 @@ void loop() {
       HC12.print(mission3);
       HC12.print("; ");
       HC12.print(mission4);
+      HC12.print("; ");
+      HC12.print(finish);
+      HC12.println("; ");
     }
     timing = millis();
 
@@ -373,4 +382,3 @@ void loop() {
 
 
 }
-
