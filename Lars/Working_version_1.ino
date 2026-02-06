@@ -355,7 +355,7 @@ void loop() {
     if (flagStart) { // движение и отправка телеметрии
       Lazer.moveTo(anX, anY);
 
-      HC12.print("Lazer_ZATEY: ");
+      HC12.print("Lazer_ZATEY; ");
       HC12.print(millis());
       HC12.print("; ");
       HC12.print(anX);
