@@ -231,7 +231,7 @@ void setup() {
   delay(1000);
 };
 
-bool flagStart = 1; // временно 1 чтобы не тестить радиомодуль
+bool flagStart = 0; // временно 1 чтобы не тестить радиомодуль
 
 bool mission1 = 0;
 bool mission2 = 0;
@@ -352,12 +352,20 @@ void loop() {
       }
     }
 
-    if (flagStart) { // движение
+    if (flagStart) { // движение и отправка телеметрии
       Lazer.moveTo(anX, anY);
+      HC12.print("Lazer1: ");
       HC12.print(anX);
       HC12.print(", ");
-      HC12.println(anY);
-
+      HC12.print(anY);
+      HC12.print("; ");
+      HC12.print(mission1);
+      HC12.print("; ");
+      HC12.print(mission2);
+      HC12.print("; ");
+      HC12.print(mission3);
+      HC12.print("; ");
+      HC12.print(mission4);
     }
     timing = millis();
 
