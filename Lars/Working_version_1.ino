@@ -1,6 +1,5 @@
 #include <AccelStepper.h>
 #include <SoftwareSerial.h>
-
 // структура турели, может крутиться куда ей скажут
 
 struct Turret {
@@ -75,7 +74,6 @@ struct Turret {
       while (digitalRead(buttonPinY) == HIGH) {
         stepperY.move(-10);
         stepperY.runToPosition();
-        Serial.println(digitalRead(buttonPinY));
 
       }
 
@@ -85,8 +83,32 @@ struct Turret {
 
       // едем в центр
       turnY(-yMinAngle); // двигаемся на -yMinAngle градусов
-    }
 
+    }
+    void calibrateX() {
+      stepperX.setMaxSpeed(100);
+      stepperX.setAcceleration(1000);
+      // Вниз до кнопки
+      digitalWrite(pin_MS1, 1);
+      digitalWrite(pin_MS2, 0);
+      digitalWrite(pin_MS3, 0);
+
+      while (digitalRead(buttonPinX) == LOW) {
+        stepperX.move(-1);
+        stepperX.runToPosition();
+
+      }
+      setFullStepMode();
+
+      // Устанавливаем нижний предел
+      Cord[0] = xMinAngle;
+      //stepperY.setCurrentPosition(angleToStepsX(yMinAngle));
+      stepperX.setMaxSpeed(1000);
+      stepperX.setAcceleration(1000);
+      // едем в центр
+      turnX(-xMinAngle); // двигаемся на -yMinAngle градусов
+
+    }
 
   private: // вспомогательные штуки, недоступны снаружи структуры
     AccelStepper stepperX;
@@ -177,12 +199,11 @@ const int pin_MS1 = 13;
 const int pin_MS2 = 11;
 const int pin_MS3 = 9;
 
-const int pin_knopkaX = 34;
+const int pin_knopkaX = 46;
 const int pin_knopkaY = 36;
 
 Turret Lazer(pin_stepX, pin_dirX, pin_stepY, pin_dirY, pin_MS1, pin_MS2, pin_MS3, pin_knopkaX, pin_knopkaY);
 SoftwareSerial HC12(10, 7); // радиомодуль
-
 void setup() {
   pinMode(avariaPin, INPUT);
   pinMode(38, OUTPUT);
@@ -204,11 +225,13 @@ void setup() {
   //  Lazer.moveTo(0, 0);
   //Lazer.moveTo(10.0, 30); // крутимся в положение (10, 30) относительно 0
   delay(100);
+  digitalWrite(38, 0);
   Lazer.calibrateY();
+  Lazer.calibrateX();
   delay(1000);
 };
 
-bool flagStart = 0; // временно 1 чтобы не тестить радиомодуль
+bool flagStart = 1; // временно 1 чтобы не тестить радиомодуль
 
 bool mission1 = 0;
 bool mission2 = 0;
@@ -227,7 +250,7 @@ void loop() {
     avaria = 1;
     digitalWrite(38, LOW);
     HC12.println("MISSION FAILED");
-    
+
     for (;;);
   }
   if (flagStart == 0) {
@@ -236,9 +259,11 @@ void loop() {
       if (c == '\n') {
         Serial.println(incomingData);
         if (incomingData == "START") {
+          digitalWrite(38, HIGH);
           HC12.println("OK");
           flagStart = true;
           Lazer.moveTo(-40, 0);
+
           break;
         }
         incomingData = "";
@@ -252,12 +277,15 @@ void loop() {
     mission1 = 1;
 
   }
-  if (millis() - timing >= 500) {
+  if (millis() - timing >= 1000) {
     if (mission1 && !(mission2 || mission3 || mission4)) { // Выполняется 1
       if (anX >= 40) {
+        digitalWrite(38, 0);
         Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
-        Lazer.moveTo(0, 0);
+        Lazer.calibrateX();
+
         Lazer.moveTo(0, -40);
+        digitalWrite(38, HIGH);
         // изменить углы, провести калибровку?
         anY = -40;
         anX = 0;
@@ -271,9 +299,12 @@ void loop() {
 
     if (mission1 && mission2 && !(mission3 || mission4)) { // Выполняется 2
       if (anY >= 40) {
+        digitalWrite(38, 0);
         Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
-        Lazer.moveTo(0, 0);
+        Lazer.calibrateX();
+
         Lazer.moveTo(-40, -40);
+        digitalWrite(38, HIGH);
         // изменить углы, провести калибровку?
         anY = -40;
         anX = -40;
@@ -286,9 +317,11 @@ void loop() {
 
     if (mission1 && mission2 && mission3 && !mission4) { // Выполняется 3
       if (anX >= 40 && anY >= 40) {
+        digitalWrite(38, 0);
         Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
-        Lazer.moveTo(0, 0);
+        Lazer.calibrateX();
         Lazer.moveTo(-40, 40);
+        digitalWrite(38, HIGH);
         anX = -40;
         anY = 40;
         mission4 = 1;
@@ -302,8 +335,11 @@ void loop() {
 
     if (mission1 && mission2 && mission3 && mission4) { // Выполняется 4
       if (anX >= 40 && anY <= 40) {
+        digitalWrite(38, LOW);
         Lazer.calibrateY(); // потом сменить на общую калибровку!!!!!!!!
-        Lazer.moveTo(-40, 0);
+        Lazer.calibrateX();
+        Lazer.moveTo(0, 0);
+        digitalWrite(38, HIGH);
         anX = 0;
         anY = 0;
         finish = 1;
@@ -329,3 +365,4 @@ void loop() {
 
 
 }
+
